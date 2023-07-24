@@ -31,6 +31,47 @@ async function run() {
     const reviewCollection = client.db('endGame').collection('review')
     const admissionCollection = client.db('endGame').collection('admission')
     const admissionDetailsCollection = client.db('endGame').collection('admissionDetails')
+    const userDetailsCollection = client.db('endGame').collection('userDetails')
+
+
+    // user details 
+    app.get('/users', async(req, res) => {
+      const email = req.query.email
+      const query = {email: email}
+      const result = await userDetailsCollection.find(query).toArray()
+      res.send(result)
+    })
+    app.post('/users', async(req, res) => {
+      const userDetails = req.body
+      const query = {email: userDetails.email}
+      const existingUser = await userDetailsCollection.findOne(query);
+      if(existingUser){
+        return res.send({ message: 'User already exists' })
+      }
+      const result = await userDetailsCollection.insertOne(userDetails)
+      res.send(result)
+    })
+
+    app.put('/users/:id', async(req, res) => {
+      const id = req.params.id
+      const filter = {_id: new ObjectId(id)}
+      const options = { upsert: true };
+      const saveChange = req.body
+      const updateDetails = {
+          $set:{
+              name: saveChange?.name,
+              photo: saveChange?.photo,
+              phoneNo: saveChange?.phoneNo,
+              age: saveChange?.age,
+              college: saveChange?.college,
+              address: saveChange?.address,
+              dateOfBirth: saveChange?.dateOfBirth
+          }
+      }
+      const result = await userDetailsCollection.updateOne(filter, updateDetails, options)
+      res.send(result)
+    })
+
 
     // colleges
     app.get('/colleges', async (req, res) => {
@@ -112,12 +153,6 @@ async function run() {
   }
 }
 run().catch(console.log);
-
-
-
-
-
-
 
 
 app.get('/', (req, res) => {
